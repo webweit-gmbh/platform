@@ -48,6 +48,8 @@ class ThemeCompiler implements ThemeCompilerInterface
 
     private string $projectDir;
 
+    private string $cacheDir;
+
     public function __construct(
         FilesystemInterface $filesystem,
         FilesystemInterface $tempFilesystem,
@@ -58,25 +60,20 @@ class ThemeCompiler implements ThemeCompilerInterface
         iterable $packages,
         CacheInvalidator $logger,
         AbstractThemePathBuilder $themePathBuilder,
-        string $projectDir
+        string $projectDir,
+        string $cacheDir
     ) {
         $this->filesystem = $filesystem;
         $this->tempFilesystem = $tempFilesystem;
         $this->themeFileResolver = $themeFileResolver;
         $this->themeFileImporter = $themeFileImporter;
-
-        $this->scssCompiler = new Compiler();
-        $cwd = \getcwd();
-
-        $this->scssCompiler->setImportPaths($cwd === false ? '' : $cwd);
-
-        $this->scssCompiler->setOutputStyle($debug ? OutputStyle::EXPANDED : OutputStyle::COMPRESSED);
         $this->eventDispatcher = $eventDispatcher;
         $this->packages = $packages;
         $this->logger = $logger;
         $this->themePathBuilder = $themePathBuilder;
         $this->debug = $debug;
         $this->projectDir = $projectDir;
+        $this->cacheDir = $cacheDir;
     }
 
     public function compileTheme(
@@ -84,8 +81,10 @@ class ThemeCompiler implements ThemeCompilerInterface
         string $themeId,
         StorefrontPluginConfiguration $themeConfig,
         StorefrontPluginConfigurationCollection $configurationCollection,
-        bool $withAssets = true
+        bool $withAssets = true,
+        bool $useCache = false
     ): void {
+        $this->initScssCompiler($useCache);
         /**
          * @feature-deprecated (flag:FEATURE_NEXT_15381) keep if branch remove complete following on feature release
          */
@@ -422,5 +421,15 @@ class ThemeCompiler implements ThemeCompilerInterface
 #variables#
 
 PHP_EOL;
+    }
+
+    private function initScssCompiler(bool $useCache): void
+    {
+        $this->scssCompiler = new Compiler($useCache ? ['cacheDir' => $this->cacheDir . '/scss-compile'] : null);
+        $cwd = \getcwd();
+
+        $this->scssCompiler->setImportPaths($cwd === false ? '' : $cwd);
+
+        $this->scssCompiler->setOutputStyle($this->debug ? OutputStyle::EXPANDED : OutputStyle::COMPRESSED);
     }
 }

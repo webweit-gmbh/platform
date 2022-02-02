@@ -31,7 +31,9 @@ class ThemeCompileCommand extends Command
     public function configure(): void
     {
         $this
-            ->addOption('keep-assets', 'k', InputOption::VALUE_NONE, 'Keep current assets, do not delete them');
+            ->addOption('keep-assets', 'k', InputOption::VALUE_NONE, 'Keep current assets, do not delete them')
+            ->addOption('use-cache', 'c', InputOption::VALUE_NONE, 'Use scss cache during compilation')
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -44,7 +46,7 @@ class ThemeCompileCommand extends Command
             $this->io->block(\sprintf('Compiling theme for sales channel for : %s', $salesChannelId));
 
             $start = microtime(true);
-            $this->themeService->compileTheme($salesChannelId, $themeId, $context, null, !$input->getOption('keep-assets'));
+            $this->themeService->compileTheme($salesChannelId, $themeId, $context, null, !$input->getOption('keep-assets'), $input->getOption('use-cache'));
             $this->io->note(sprintf('Took %f seconds', microtime(true) - $start));
         }
 

@@ -62,14 +62,16 @@ class ThemeService
         string $themeId,
         Context $context,
         ?StorefrontPluginConfigurationCollection $configurationCollection = null,
-        bool $withAssets = true
+        bool $withAssets = true,
+        bool $useCache = false
     ): void {
         $this->themeCompiler->compileTheme(
             $salesChannelId,
             $themeId,
             $this->configLoader->load($themeId, $context),
             $configurationCollection ?? $this->extensionRegistery->getConfigurations(),
-            $withAssets
+            $withAssets,
+            $useCache
         );
     }
 
@@ -311,11 +313,11 @@ class ThemeService
     {
         $mappings = new ThemeSalesChannelCollection();
         $themeData = $this->connection->fetchAllAssociative(
-            'SELECT LOWER(HEX(theme.id)) as id, LOWER(HEX(childTheme.id)) as dependentId, 
+            'SELECT LOWER(HEX(theme.id)) as id, LOWER(HEX(childTheme.id)) as dependentId,
             LOWER(HEX(tsc.sales_channel_id)) as saleschannelId,
-            LOWER(HEX(dtsc.sales_channel_id)) as dsaleschannelId 
-            FROM theme 
-            LEFT JOIN theme as childTheme ON childTheme.parent_theme_id = theme.id 
+            LOWER(HEX(dtsc.sales_channel_id)) as dsaleschannelId
+            FROM theme
+            LEFT JOIN theme as childTheme ON childTheme.parent_theme_id = theme.id
             LEFT JOIN theme_sales_channel as tsc ON theme.id = tsc.theme_id
             LEFT JOIN theme_sales_channel as dtsc ON childTheme.id = dtsc.theme_id
             WHERE theme.id = :id',
